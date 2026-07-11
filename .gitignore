@@ -1,6 +1,7 @@
 /target/
 /.env
 /out/
+/tmp/
 *.mp3
 *.wav
 *.png

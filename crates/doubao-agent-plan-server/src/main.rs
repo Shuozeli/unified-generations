@@ -4,7 +4,7 @@ use std::sync::Arc;
 use clap::Parser;
 use doubao_agent_plan::{
     AgentPlanClient, AgentPlanConfig, AudioFormat, ImageGenerationRequest, ImageOutputFormat,
-    ImageSize, LlmMessage, LlmMessageRequest, MessageRole, TtsRequest,
+    ImageSize, LlmMessage, LlmMessageRequest, MessageRole, TtsRequest, tts_voice_presets,
 };
 use tonic::{Request, Response, Status, transport::Server};
 
@@ -15,8 +15,8 @@ pub mod pb {
 use pb::agent_plan_service_server::{AgentPlanService, AgentPlanServiceServer};
 use pb::{
     ChatMessage, GenerateImageRequest, GenerateImageResponse, GeneratedImage, HealthRequest,
-    HealthResponse, SendMessageRequest, SendMessageResponse, SynthesizeSpeechRequest,
-    SynthesizeSpeechResponse,
+    HealthResponse, ListVoicesRequest, ListVoicesResponse, SendMessageRequest, SendMessageResponse,
+    SynthesizeSpeechRequest, SynthesizeSpeechResponse, VoicePreset as ProtoVoicePreset,
 };
 
 #[derive(Debug, Parser)]
@@ -133,6 +133,28 @@ impl AgentPlanService for AgentPlanGrpc {
             usage_json: json_string(response.usage.as_ref()).map_err(to_status)?,
             raw_json: serde_json::to_string(&response).map_err(to_status)?,
         }))
+    }
+
+    async fn list_voices(
+        &self,
+        request: Request<ListVoicesRequest>,
+    ) -> Result<Response<ListVoicesResponse>, Status> {
+        let request = request.into_inner();
+        let voices = tts_voice_presets()
+            .iter()
+            .filter(|voice| request.locale.is_empty() || voice.locale == request.locale)
+            .filter(|voice| request.gender.is_empty() || voice.gender == request.gender)
+            .filter(|voice| request.category.is_empty() || voice.category == request.category)
+            .map(|voice| ProtoVoicePreset {
+                id: voice.id.to_string(),
+                display_name: voice.display_name.to_string(),
+                locale: voice.locale.to_string(),
+                gender: voice.gender.to_string(),
+                category: voice.category.to_string(),
+                notes: voice.notes.to_string(),
+            })
+            .collect();
+        Ok(Response::new(ListVoicesResponse { voices }))
     }
 
     async fn synthesize_speech(

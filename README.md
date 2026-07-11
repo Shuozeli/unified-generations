@@ -1,4 +1,4 @@
-<!-- agent-updated: 2026-07-11T05:24:00Z -->
+<!-- agent-updated: 2026-07-11T05:34:00Z -->
 # doubao-agent-plan-rs
 
 Rust client, CLI, and gRPC server for Volcengine Doubao Ark Agent Plan APIs.
@@ -51,6 +51,23 @@ cargo run -p doubao-agent-plan-cli -- tts \
   "你好，欢迎使用语音合成服务。"
 ```
 
+List built-in Agent Plan `seed-tts-2.0` voice presets:
+
+```bash
+cargo run -p doubao-agent-plan-cli -- voices
+cargo run -p doubao-agent-plan-cli -- voices --gender male
+cargo run -p doubao-agent-plan-cli -- voices --category audiobook
+```
+
+Probe the first few built-in TTS presets and write sample MP3s:
+
+```bash
+cargo run -p doubao-agent-plan-cli -- tts-probe \
+  --limit 6 \
+  --out-dir out/tts-probe \
+  --text "你好，欢迎使用语音合成服务。"
+```
+
 Note: older `seed-tts-1.0` speakers may not match Agent Plan `seed-tts-2.0`.
 For example, `zh_male_jingqiangkanye_moon_bigtts` returned
 `resource ID is mismatched with speaker related resource` during the probe.
@@ -66,6 +83,7 @@ gRPC service:
 - `doubao.agentplan.v1.AgentPlanService/Health`
 - `doubao.agentplan.v1.AgentPlanService/SendMessage`
 - `doubao.agentplan.v1.AgentPlanService/GenerateImage`
+- `doubao.agentplan.v1.AgentPlanService/ListVoices`
 - `doubao.agentplan.v1.AgentPlanService/SynthesizeSpeech`
 
 The protobuf contract lives at:

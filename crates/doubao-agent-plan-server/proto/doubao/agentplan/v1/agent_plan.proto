@@ -6,6 +6,7 @@ service AgentPlanService {
   rpc Health(HealthRequest) returns (HealthResponse);
   rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
   rpc GenerateImage(GenerateImageRequest) returns (GenerateImageResponse);
+  rpc ListVoices(ListVoicesRequest) returns (ListVoicesResponse);
   rpc SynthesizeSpeech(SynthesizeSpeechRequest) returns (SynthesizeSpeechResponse);
 }
 
@@ -56,6 +57,25 @@ message GeneratedImage {
   string url = 1;
   string b64_json = 2;
   string size = 3;
+}
+
+message ListVoicesRequest {
+  string locale = 1;
+  string gender = 2;
+  string category = 3;
+}
+
+message ListVoicesResponse {
+  repeated VoicePreset voices = 1;
+}
+
+message VoicePreset {
+  string id = 1;
+  string display_name = 2;
+  string locale = 3;
+  string gender = 4;
+  string category = 5;
+  string notes = 6;
 }
 
 message SynthesizeSpeechRequest {

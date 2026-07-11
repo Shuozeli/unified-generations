@@ -1,4 +1,4 @@
-<!-- agent-updated: 2026-07-11T05:24:00Z -->
+<!-- agent-updated: 2026-07-11T05:34:00Z -->
 # Doc Manifest
 
 | File | Covers | Update When |

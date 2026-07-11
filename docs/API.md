@@ -1,4 +1,4 @@
-<!-- agent-updated: 2026-07-11T05:24:00Z -->
+<!-- agent-updated: 2026-07-11T05:34:00Z -->
 # API
 
 ## Client SDK
@@ -8,6 +8,9 @@
 - `send_message(&LlmMessageRequest) -> LlmMessageResponse`
 - `generate_image(&ImageGenerationRequest) -> ImageGenerationResponse`
 - `synthesize_speech(&TtsRequest) -> TtsResponse`
+
+The SDK also exposes `tts_voice_presets()`, a curated set of known Agent Plan
+`seed-tts-2.0` speaker IDs with display names and categories.
 
 ## gRPC Server
 
@@ -73,3 +76,13 @@ Returns raw audio bytes:
   "log_id": "..."
 }
 ```
+
+### `ListVoices`
+
+Returns built-in TTS speaker presets. Optional filters:
+
+- `locale`
+- `gender`
+- `category`
+
+Categories currently include `general`, `role_play`, and `audiobook`.
