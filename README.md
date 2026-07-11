@@ -1,7 +1,7 @@
-<!-- agent-updated: 2026-07-11T05:10:00Z -->
+<!-- agent-updated: 2026-07-11T05:24:00Z -->
 # doubao-agent-plan-rs
 
-Rust client, CLI, and HTTP server for Volcengine Doubao Ark Agent Plan APIs.
+Rust client, CLI, and gRPC server for Volcengine Doubao Ark Agent Plan APIs.
 
 This repo wraps the Agent Plan endpoints that were verified on 2026-07-11:
 
@@ -22,7 +22,7 @@ export ARK_AGENT_PLAN_API_KEY=ark-...
 crates/
 ├── doubao-agent-plan          Rust client SDK
 ├── doubao-agent-plan-cli      Command line wrapper
-└── doubao-agent-plan-server   Axum HTTP wrapper
+└── doubao-agent-plan-server   tonic gRPC wrapper
 ```
 
 ## CLI
@@ -61,23 +61,30 @@ For example, `zh_male_jingqiangkanye_moon_bigtts` returned
 cargo run -p doubao-agent-plan-server -- --bind 127.0.0.1:8787
 ```
 
-Endpoints:
+gRPC service:
 
-- `GET /healthz`
-- `POST /v1/messages`
-- `POST /v1/images:generate`
-- `POST /v1/tts:synthesize`
+- `doubao.agentplan.v1.AgentPlanService/Health`
+- `doubao.agentplan.v1.AgentPlanService/SendMessage`
+- `doubao.agentplan.v1.AgentPlanService/GenerateImage`
+- `doubao.agentplan.v1.AgentPlanService/SynthesizeSpeech`
 
-Example:
+The protobuf contract lives at:
+
+```text
+crates/doubao-agent-plan-server/proto/doubao/agentplan/v1/agent_plan.proto
+```
+
+Example with `grpcurl`:
 
 ```bash
-curl http://127.0.0.1:8787/v1/messages \
-  -H 'Content-Type: application/json' \
+grpcurl -plaintext \
   -d '{
     "model": "doubao-seed-2.0-mini",
-    "max_tokens": 64,
+    "maxTokens": 64,
     "messages": [{"role": "user", "content": "Reply only with OK."}]
-  }'
+  }' \
+  127.0.0.1:8787 \
+  doubao.agentplan.v1.AgentPlanService/SendMessage
 ```
 
 ## Rust API

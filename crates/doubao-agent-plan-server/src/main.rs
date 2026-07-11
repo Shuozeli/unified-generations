@@ -1,20 +1,26 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use axum::extract::State;
-use axum::http::StatusCode;
-use axum::routing::{get, post};
-use axum::{Json, Router};
-use base64::Engine;
 use clap::Parser;
 use doubao_agent_plan::{
-    AgentPlanClient, AgentPlanConfig, ImageGenerationRequest, LlmMessageRequest, TtsRequest,
+    AgentPlanClient, AgentPlanConfig, AudioFormat, ImageGenerationRequest, ImageOutputFormat,
+    ImageSize, LlmMessage, LlmMessageRequest, MessageRole, TtsRequest,
 };
-use serde::Serialize;
-use tower_http::trace::TraceLayer;
+use tonic::{Request, Response, Status, transport::Server};
+
+pub mod pb {
+    tonic::include_proto!("doubao.agentplan.v1");
+}
+
+use pb::agent_plan_service_server::{AgentPlanService, AgentPlanServiceServer};
+use pb::{
+    ChatMessage, GenerateImageRequest, GenerateImageResponse, GeneratedImage, HealthRequest,
+    HealthResponse, SendMessageRequest, SendMessageResponse, SynthesizeSpeechRequest,
+    SynthesizeSpeechResponse,
+};
 
 #[derive(Debug, Parser)]
-#[command(version, about = "HTTP server for Doubao Ark Agent Plan")]
+#[command(version, about = "gRPC server for Doubao Ark Agent Plan")]
 struct Args {
     #[arg(long, env = "DOUBAO_ARK_AGENT_PLAN_API_KEY")]
     api_key: Option<String>,
@@ -24,7 +30,7 @@ struct Args {
 }
 
 #[derive(Clone)]
-struct AppState {
+struct AgentPlanGrpc {
     client: Arc<AgentPlanClient>,
 }
 
@@ -39,83 +45,184 @@ async fn main() -> anyhow::Result<()> {
         Some(api_key) => AgentPlanConfig::new(api_key),
         None => AgentPlanConfig::from_env()?,
     };
-    let state = AppState {
+    let service = AgentPlanGrpc {
         client: Arc::new(AgentPlanClient::new(config)?),
     };
-    let app = Router::new()
-        .route("/healthz", get(healthz))
-        .route("/v1/messages", post(messages))
-        .route("/v1/images:generate", post(images))
-        .route("/v1/tts:synthesize", post(tts))
-        .layer(TraceLayer::new_for_http())
-        .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind(args.bind).await?;
     tracing::info!(addr = %args.bind, "listening");
-    axum::serve(listener, app).await?;
+    Server::builder()
+        .add_service(AgentPlanServiceServer::new(service))
+        .serve(args.bind)
+        .await?;
     Ok(())
 }
 
-async fn healthz() -> Json<Health> {
-    Json(Health { ok: true })
-}
+#[tonic::async_trait]
+impl AgentPlanService for AgentPlanGrpc {
+    async fn health(
+        &self,
+        _request: Request<HealthRequest>,
+    ) -> Result<Response<HealthResponse>, Status> {
+        Ok(Response::new(HealthResponse { ok: true }))
+    }
 
-async fn messages(
-    State(state): State<AppState>,
-    Json(request): Json<LlmMessageRequest>,
-) -> Result<Json<serde_json::Value>, ApiError> {
-    let response = state.client.send_message(&request).await?;
-    Ok(Json(serde_json::to_value(response)?))
-}
+    async fn send_message(
+        &self,
+        request: Request<SendMessageRequest>,
+    ) -> Result<Response<SendMessageResponse>, Status> {
+        let request = request.into_inner();
+        let response = self
+            .client
+            .send_message(&LlmMessageRequest {
+                model: request.model,
+                max_tokens: request.max_tokens,
+                messages: request
+                    .messages
+                    .into_iter()
+                    .map(map_chat_message)
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(Status::invalid_argument)?,
+            })
+            .await
+            .map_err(to_status)?;
 
-async fn images(
-    State(state): State<AppState>,
-    Json(request): Json<ImageGenerationRequest>,
-) -> Result<Json<serde_json::Value>, ApiError> {
-    let response = state.client.generate_image(&request).await?;
-    Ok(Json(serde_json::to_value(response)?))
-}
+        Ok(Response::new(SendMessageResponse {
+            id: response.id.clone(),
+            role: response.role.clone(),
+            model: response.model.clone(),
+            text: response.text(),
+            stop_reason: response.stop_reason.clone().unwrap_or_default(),
+            usage_json: json_string(response.usage.as_ref()).map_err(to_status)?,
+            raw_json: serde_json::to_string(&response).map_err(to_status)?,
+        }))
+    }
 
-async fn tts(
-    State(state): State<AppState>,
-    Json(request): Json<TtsRequest>,
-) -> Result<Json<SynthesizeSpeechResponse>, ApiError> {
-    let response = state.client.synthesize_speech(&request).await?;
-    Ok(Json(SynthesizeSpeechResponse {
-        audio_base64: base64::engine::general_purpose::STANDARD.encode(response.audio),
-        content_type: response.content_type,
-        log_id: response.log_id,
-    }))
-}
+    async fn generate_image(
+        &self,
+        request: Request<GenerateImageRequest>,
+    ) -> Result<Response<GenerateImageResponse>, Status> {
+        let request = request.into_inner();
+        let response = self
+            .client
+            .generate_image(&ImageGenerationRequest {
+                model: default_if_empty(request.model, "doubao-seedream-5.0-lite"),
+                prompt: request.prompt,
+                size: parse_image_size(&request.size).map_err(Status::invalid_argument)?,
+                output_format: parse_image_output_format(&request.output_format)
+                    .map_err(Status::invalid_argument)?,
+                watermark: request.watermark,
+                response_format: Some("url".to_string()),
+            })
+            .await
+            .map_err(to_status)?;
 
-#[derive(Serialize)]
-struct Health {
-    ok: bool,
-}
+        let images = response
+            .data
+            .iter()
+            .map(|image| GeneratedImage {
+                url: image.url.clone().unwrap_or_default(),
+                b64_json: image.b64_json.clone().unwrap_or_default(),
+                size: image.size.clone().unwrap_or_default(),
+            })
+            .collect();
 
-#[derive(Serialize)]
-struct SynthesizeSpeechResponse {
-    audio_base64: String,
-    content_type: Option<String>,
-    log_id: Option<String>,
-}
+        Ok(Response::new(GenerateImageResponse {
+            model: response.model.clone(),
+            created: response.created,
+            images,
+            usage_json: json_string(response.usage.as_ref()).map_err(to_status)?,
+            raw_json: serde_json::to_string(&response).map_err(to_status)?,
+        }))
+    }
 
-struct ApiError(anyhow::Error);
+    async fn synthesize_speech(
+        &self,
+        request: Request<SynthesizeSpeechRequest>,
+    ) -> Result<Response<SynthesizeSpeechResponse>, Status> {
+        let request = request.into_inner();
+        let mut tts = TtsRequest::new(request.text, request.speaker);
+        if !request.uid.is_empty() {
+            tts.user.uid = request.uid;
+        }
+        tts.req_params.audio_params.format =
+            parse_audio_format(&request.audio_format).map_err(Status::invalid_argument)?;
+        if request.sample_rate != 0 {
+            tts.req_params.audio_params.sample_rate = request.sample_rate;
+        }
+        tts.req_params.audio_params.speech_rate = request.speech_rate;
+        tts.req_params.audio_params.loudness_rate = request.loudness_rate;
 
-impl<E> From<E> for ApiError
-where
-    E: Into<anyhow::Error>,
-{
-    fn from(value: E) -> Self {
-        Self(value.into())
+        let response = self
+            .client
+            .synthesize_speech(&tts)
+            .await
+            .map_err(to_status)?;
+
+        Ok(Response::new(SynthesizeSpeechResponse {
+            audio: response.audio,
+            content_type: response.content_type.unwrap_or_default(),
+            log_id: response.log_id.unwrap_or_default(),
+        }))
     }
 }
 
-impl axum::response::IntoResponse for ApiError {
-    fn into_response(self) -> axum::response::Response {
-        let body = Json(serde_json::json!({
-            "error": self.0.to_string(),
-        }));
-        (StatusCode::BAD_GATEWAY, body).into_response()
+fn map_chat_message(message: ChatMessage) -> Result<LlmMessage, String> {
+    let role = match message.role.as_str() {
+        "" | "user" => MessageRole::User,
+        "assistant" => MessageRole::Assistant,
+        "system" => MessageRole::System,
+        other => {
+            return Err(format!("unsupported message role: {other}"));
+        }
+    };
+    Ok(LlmMessage {
+        role,
+        content: message.content,
+    })
+}
+
+fn parse_image_size(value: &str) -> Result<ImageSize, String> {
+    match value {
+        "" | "2K" | "two_k" => Ok(ImageSize::TwoK),
+        "1K" | "one_k" => Ok(ImageSize::OneK),
+        "4K" | "four_k" => Ok(ImageSize::FourK),
+        other => Err(format!("unsupported image size: {other}")),
     }
+}
+
+fn parse_image_output_format(value: &str) -> Result<ImageOutputFormat, String> {
+    match value {
+        "" | "png" => Ok(ImageOutputFormat::Png),
+        "jpeg" | "jpg" => Ok(ImageOutputFormat::Jpeg),
+        other => Err(format!("unsupported image output format: {other}")),
+    }
+}
+
+fn parse_audio_format(value: &str) -> Result<AudioFormat, String> {
+    match value {
+        "" | "mp3" => Ok(AudioFormat::Mp3),
+        "pcm" => Ok(AudioFormat::Pcm),
+        "wav" => Ok(AudioFormat::Wav),
+        "ogg_opus" => Ok(AudioFormat::OggOpus),
+        other => Err(format!("unsupported audio format: {other}")),
+    }
+}
+
+fn default_if_empty(value: String, default: &str) -> String {
+    if value.is_empty() {
+        default.to_string()
+    } else {
+        value
+    }
+}
+
+fn json_string(value: Option<&serde_json::Value>) -> serde_json::Result<String> {
+    match value {
+        Some(value) => serde_json::to_string(value),
+        None => Ok(String::new()),
+    }
+}
+
+fn to_status(error: impl std::fmt::Display) -> Status {
+    Status::internal(error.to_string())
 }

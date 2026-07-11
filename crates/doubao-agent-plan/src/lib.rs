@@ -7,5 +7,5 @@ pub mod tts;
 pub use client::{AgentPlanClient, AgentPlanConfig};
 pub use error::{AgentPlanError, Result};
 pub use image::{ImageGenerationRequest, ImageGenerationResponse, ImageOutputFormat, ImageSize};
-pub use llm::{LlmMessage, LlmMessageRequest, LlmMessageResponse, MessageContent};
+pub use llm::{LlmMessage, LlmMessageRequest, LlmMessageResponse, MessageContent, MessageRole};
 pub use tts::{AudioFormat, TtsRequest, TtsResponse};

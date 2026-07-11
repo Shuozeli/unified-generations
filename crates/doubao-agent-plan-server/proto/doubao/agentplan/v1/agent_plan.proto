@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package doubao.agentplan.v1;
+
+service AgentPlanService {
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+  rpc GenerateImage(GenerateImageRequest) returns (GenerateImageResponse);
+  rpc SynthesizeSpeech(SynthesizeSpeechRequest) returns (SynthesizeSpeechResponse);
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  bool ok = 1;
+}
+
+message SendMessageRequest {
+  string model = 1;
+  uint32 max_tokens = 2;
+  repeated ChatMessage messages = 3;
+}
+
+message ChatMessage {
+  string role = 1;
+  string content = 2;
+}
+
+message SendMessageResponse {
+  string id = 1;
+  string role = 2;
+  string model = 3;
+  string text = 4;
+  string stop_reason = 5;
+  string usage_json = 6;
+  string raw_json = 7;
+}
+
+message GenerateImageRequest {
+  string model = 1;
+  string prompt = 2;
+  string size = 3;
+  string output_format = 4;
+  bool watermark = 5;
+}
+
+message GenerateImageResponse {
+  string model = 1;
+  uint64 created = 2;
+  repeated GeneratedImage images = 3;
+  string usage_json = 4;
+  string raw_json = 5;
+}
+
+message GeneratedImage {
+  string url = 1;
+  string b64_json = 2;
+  string size = 3;
+}
+
+message SynthesizeSpeechRequest {
+  string text = 1;
+  string speaker = 2;
+  string audio_format = 3;
+  uint32 sample_rate = 4;
+  string uid = 5;
+  optional int32 speech_rate = 6;
+  optional int32 loudness_rate = 7;
+}
+
+message SynthesizeSpeechResponse {
+  bytes audio = 1;
+  string content_type = 2;
+  string log_id = 3;
+}

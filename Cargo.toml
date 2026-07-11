@@ -16,16 +16,18 @@ authors = ["Shuozeli <102564117+Shuozeli@users.noreply.github.com>"]
 
 [workspace.dependencies]
 anyhow = "1"
-axum = "0.8"
 base64 = "0.22"
 bytes = "1"
 clap = { version = "4", features = ["derive", "env"] }
+prost = "0.13"
+protoc-bin-vendored = "3"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
 tokio = { version = "1", features = ["full"] }
-tower-http = { version = "0.6", features = ["trace", "cors"] }
+tonic = "0.12"
+tonic-build = "0.12"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1", features = ["v4", "serde"] }
