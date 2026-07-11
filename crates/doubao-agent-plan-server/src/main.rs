@@ -41,10 +41,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let args = Args::parse();
-    let config = match args.api_key {
-        Some(api_key) => AgentPlanConfig::new(api_key),
-        None => AgentPlanConfig::from_env()?,
-    };
+    let config = AgentPlanConfig::from_sources(args.api_key)?;
     let service = AgentPlanGrpc {
         client: Arc::new(AgentPlanClient::new(config)?),
     };

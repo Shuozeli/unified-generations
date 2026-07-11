@@ -1,10 +1,13 @@
+use std::io::{IsTerminal, Write};
 use std::path::PathBuf;
 
 use anyhow::Context;
 use clap::{Parser, Subcommand, ValueEnum};
 use doubao_agent_plan::{
-    AgentPlanClient, AgentPlanConfig, AudioFormat, ImageGenerationRequest, ImageOutputFormat,
-    ImageSize, LlmMessageRequest, TtsRequest, tts_voice_presets,
+    AgentPlanClient, AgentPlanConfig, ArkCliConfig, AudioFormat, DEFAULT_ANTHROPIC_VERSION,
+    DEFAULT_PLAN_BASE_URL, DEFAULT_TTS_RESOURCE_ID, DEFAULT_TTS_URL, ImageGenerationRequest,
+    ImageOutputFormat, ImageSize, LlmMessageRequest, TtsRequest, arkcli_config_path,
+    load_arkcli_config, masked_api_key, tts_voice_presets, write_arkcli_config,
 };
 
 #[derive(Debug, Parser)]
@@ -19,6 +22,24 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    Init {
+        #[arg(long, env = "DOUBAO_ARK_AGENT_PLAN_API_KEY")]
+        api_key: Option<String>,
+        #[arg(long, default_value = DEFAULT_PLAN_BASE_URL)]
+        plan_base_url: String,
+        #[arg(long, default_value = DEFAULT_TTS_URL)]
+        tts_url: String,
+        #[arg(long, default_value = DEFAULT_TTS_RESOURCE_ID)]
+        tts_resource_id: String,
+        #[arg(long, default_value = DEFAULT_ANTHROPIC_VERSION)]
+        anthropic_version: String,
+        #[arg(long)]
+        force: bool,
+    },
+    Config {
+        #[command(subcommand)]
+        command: ConfigCommand,
+    },
     Chat {
         prompt: String,
         #[arg(long, default_value = "doubao-seed-2.0-mini")]
@@ -56,6 +77,12 @@ enum Command {
     },
 }
 
+#[derive(Debug, Subcommand)]
+enum ConfigCommand {
+    Path,
+    Show,
+}
+
 #[derive(Debug, Clone, Copy, ValueEnum)]
 enum CliImageSize {
     OneK,
@@ -78,6 +105,54 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     match args.command {
+        Command::Init {
+            api_key,
+            plan_base_url,
+            tts_url,
+            tts_resource_id,
+            anthropic_version,
+            force,
+        } => {
+            let path = arkcli_config_path()?;
+            if path.exists() && !force {
+                anyhow::bail!(
+                    "{} already exists; pass --force to overwrite it",
+                    path.display()
+                );
+            }
+
+            let api_key = resolve_init_api_key(api_key.or(args.api_key))?;
+            let mut config = ArkCliConfig::new(api_key);
+            config.plan_base_url = plan_base_url;
+            config.tts_url = tts_url;
+            config.tts_resource_id = tts_resource_id;
+            config.anthropic_version = anthropic_version;
+
+            let path = write_arkcli_config(&config)?;
+            println!("wrote {}", path.display());
+            println!("api_key {}", masked_api_key(&config.api_key));
+            println!("plan_base_url {}", config.plan_base_url);
+            println!("tts_url {}", config.tts_url);
+            println!("tts_resource_id {}", config.tts_resource_id);
+            println!("anthropic_version {}", config.anthropic_version);
+        }
+        Command::Config { command } => match command {
+            ConfigCommand::Path => {
+                println!("{}", arkcli_config_path()?.display());
+            }
+            ConfigCommand::Show => {
+                let path = arkcli_config_path()?;
+                let config = load_arkcli_config()?.with_context(|| {
+                    format!("{} does not exist; run init first", path.display())
+                })?;
+                println!("path {}", path.display());
+                println!("api_key {}", masked_api_key(&config.api_key));
+                println!("plan_base_url {}", config.plan_base_url);
+                println!("tts_url {}", config.tts_url);
+                println!("tts_resource_id {}", config.tts_resource_id);
+                println!("anthropic_version {}", config.anthropic_version);
+            }
+        },
         Command::Chat {
             prompt,
             model,
@@ -161,11 +236,30 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn make_client(api_key: Option<String>) -> anyhow::Result<AgentPlanClient> {
-    let config = match api_key {
-        Some(api_key) => AgentPlanConfig::new(api_key),
-        None => AgentPlanConfig::from_env()?,
-    };
+    let config = AgentPlanConfig::from_sources(api_key)?;
     Ok(AgentPlanClient::new(config)?)
+}
+
+fn resolve_init_api_key(api_key: Option<String>) -> anyhow::Result<String> {
+    if let Some(api_key) = api_key {
+        return Ok(api_key);
+    }
+    if let Ok(api_key) = std::env::var("ARK_AGENT_PLAN_API_KEY") {
+        return Ok(api_key);
+    }
+    if !std::io::stdin().is_terminal() {
+        anyhow::bail!("API key is required; pass --api-key or set DOUBAO_ARK_AGENT_PLAN_API_KEY");
+    }
+
+    print!("Ark Agent Plan API key: ");
+    std::io::stdout().flush()?;
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input)?;
+    let api_key = input.trim().to_string();
+    if api_key.is_empty() {
+        anyhow::bail!("API key is required");
+    }
+    Ok(api_key)
 }
 
 fn sanitize_filename(value: &str) -> String {

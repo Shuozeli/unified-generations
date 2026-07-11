@@ -1,7 +1,34 @@
-<!-- agent-updated: 2026-07-11T05:34:00Z -->
+<!-- agent-updated: 2026-07-11T06:20:00Z -->
 # API
 
 ## Client SDK
+
+`AgentPlanConfig::from_sources(None)` loads `~/.arkcli/config.toml`, then applies
+environment variable overrides. Passing `Some(api_key)` overrides only the key
+for one client construction.
+
+Config file path:
+
+```text
+~/.arkcli/config.toml
+```
+
+Supported config fields:
+
+- `api_key`
+- `plan_base_url`
+- `tts_url`
+- `tts_resource_id`
+- `anthropic_version`
+
+Environment overrides:
+
+- `DOUBAO_ARK_AGENT_PLAN_API_KEY`
+- `ARK_AGENT_PLAN_API_KEY`
+- `ARK_AGENT_PLAN_BASE_URL`
+- `ARK_AGENT_PLAN_TTS_URL`
+- `ARK_AGENT_PLAN_TTS_RESOURCE_ID`
+- `ARK_AGENT_PLAN_ANTHROPIC_VERSION`
 
 `AgentPlanClient` exposes three methods:
 

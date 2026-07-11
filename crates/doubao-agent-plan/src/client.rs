@@ -3,6 +3,10 @@ use bytes::Bytes;
 use reqwest::header::{CONTENT_TYPE, HeaderMap, HeaderValue};
 use uuid::Uuid;
 
+use crate::config_file::{
+    ArkCliConfig, DEFAULT_ANTHROPIC_VERSION, DEFAULT_PLAN_BASE_URL, DEFAULT_TTS_RESOURCE_ID,
+    DEFAULT_TTS_URL, load_arkcli_config,
+};
 use crate::error::{AgentPlanError, Result};
 use crate::image::{ImageGenerationRequest, ImageGenerationResponse};
 use crate::llm::{LlmMessageRequest, LlmMessageResponse};
@@ -12,6 +16,8 @@ use crate::tts::{TtsLine, TtsRequest, TtsResponse};
 pub struct AgentPlanConfig {
     pub api_key: String,
     pub plan_base_url: String,
+    pub tts_url: String,
+    pub tts_resource_id: String,
     pub anthropic_version: String,
 }
 
@@ -19,8 +25,10 @@ impl AgentPlanConfig {
     pub fn new(api_key: impl Into<String>) -> Self {
         Self {
             api_key: api_key.into(),
-            plan_base_url: "https://ark.cn-beijing.volces.com/api/plan".to_string(),
-            anthropic_version: "2023-06-01".to_string(),
+            plan_base_url: DEFAULT_PLAN_BASE_URL.to_string(),
+            tts_url: DEFAULT_TTS_URL.to_string(),
+            tts_resource_id: DEFAULT_TTS_RESOURCE_ID.to_string(),
+            anthropic_version: DEFAULT_ANTHROPIC_VERSION.to_string(),
         }
     }
 
@@ -28,7 +36,54 @@ impl AgentPlanConfig {
         let api_key = std::env::var("DOUBAO_ARK_AGENT_PLAN_API_KEY")
             .or_else(|_| std::env::var("ARK_AGENT_PLAN_API_KEY"))
             .map_err(|_| AgentPlanError::MissingApiKey)?;
-        Ok(Self::new(api_key))
+        let mut config = Self::new(api_key);
+        config.apply_env_overrides();
+        Ok(config)
+    }
+
+    pub fn from_sources(api_key_override: Option<String>) -> Result<Self> {
+        let mut config = match load_arkcli_config()? {
+            Some(file_config) => Self::from_file_config(file_config),
+            None => Self::new(""),
+        };
+        config.apply_env_overrides();
+        if let Some(api_key) = api_key_override {
+            config.api_key = api_key;
+        }
+        if config.api_key.trim().is_empty() {
+            return Err(AgentPlanError::MissingApiKey);
+        }
+        Ok(config)
+    }
+
+    fn from_file_config(file_config: ArkCliConfig) -> Self {
+        Self {
+            api_key: file_config.api_key,
+            plan_base_url: file_config.plan_base_url,
+            tts_url: file_config.tts_url,
+            tts_resource_id: file_config.tts_resource_id,
+            anthropic_version: file_config.anthropic_version,
+        }
+    }
+
+    fn apply_env_overrides(&mut self) {
+        if let Ok(api_key) = std::env::var("DOUBAO_ARK_AGENT_PLAN_API_KEY")
+            .or_else(|_| std::env::var("ARK_AGENT_PLAN_API_KEY"))
+        {
+            self.api_key = api_key;
+        }
+        if let Ok(plan_base_url) = std::env::var("ARK_AGENT_PLAN_BASE_URL") {
+            self.plan_base_url = plan_base_url;
+        }
+        if let Ok(tts_url) = std::env::var("ARK_AGENT_PLAN_TTS_URL") {
+            self.tts_url = tts_url;
+        }
+        if let Ok(tts_resource_id) = std::env::var("ARK_AGENT_PLAN_TTS_RESOURCE_ID") {
+            self.tts_resource_id = tts_resource_id;
+        }
+        if let Ok(anthropic_version) = std::env::var("ARK_AGENT_PLAN_ANTHROPIC_VERSION") {
+            self.anthropic_version = anthropic_version;
+        }
     }
 }
 
@@ -86,7 +141,7 @@ impl AgentPlanClient {
     pub async fn synthesize_speech(&self, request: &TtsRequest) -> Result<TtsResponse> {
         let response = self
             .http
-            .post("https://openspeech.bytedance.com/api/v3/plan/tts/unidirectional")
+            .post(self.config.tts_url.as_str())
             .headers(self.tts_headers()?)
             .json(request)
             .send()
@@ -120,7 +175,12 @@ impl AgentPlanClient {
         );
         headers.insert(
             "X-Api-Resource-Id",
-            HeaderValue::from_static("seed-tts-2.0"),
+            HeaderValue::from_str(self.config.tts_resource_id.as_str()).map_err(|_| {
+                AgentPlanError::TtsCode {
+                    code: 0,
+                    message: "invalid TTS resource id header value".to_string(),
+                }
+            })?,
         );
         headers.insert(
             "X-Api-Request-Id",

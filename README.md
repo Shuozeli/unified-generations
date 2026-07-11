@@ -1,4 +1,4 @@
-<!-- agent-updated: 2026-07-11T05:34:00Z -->
+<!-- agent-updated: 2026-07-11T06:20:00Z -->
 # doubao-agent-plan-rs
 
 Rust client, CLI, and gRPC server for Volcengine Doubao Ark Agent Plan APIs.
@@ -9,11 +9,35 @@ This repo wraps the Agent Plan endpoints that were verified on 2026-07-11:
 - Image generation: `https://ark.cn-beijing.volces.com/api/plan/v3/images/generations`
 - TTS: `https://openspeech.bytedance.com/api/v3/plan/tts/unidirectional`
 
-The API key is never hard-coded. Set one of:
+The API key is never hard-coded. Initialize a local Ark CLI config first:
+
+```bash
+cargo run -p doubao-agent-plan-cli -- init --api-key ark-...
+```
+
+This writes `~/.arkcli/config.toml`:
+
+```toml
+api_key = "ark-..."
+plan_base_url = "https://ark.cn-beijing.volces.com/api/plan"
+tts_url = "https://openspeech.bytedance.com/api/v3/plan/tts/unidirectional"
+tts_resource_id = "seed-tts-2.0"
+anthropic_version = "2023-06-01"
+```
+
+Use `cargo run -p doubao-agent-plan-cli -- config show` to inspect the active
+file with the key masked. The CLI, SDK helper, and gRPC server all read this
+file by default.
+
+For automation, command-line and environment overrides still work:
 
 ```bash
 export DOUBAO_ARK_AGENT_PLAN_API_KEY=ark-...
 export ARK_AGENT_PLAN_API_KEY=ark-...
+export ARK_AGENT_PLAN_BASE_URL=https://ark.cn-beijing.volces.com/api/plan
+export ARK_AGENT_PLAN_TTS_URL=https://openspeech.bytedance.com/api/v3/plan/tts/unidirectional
+export ARK_AGENT_PLAN_TTS_RESOURCE_ID=seed-tts-2.0
+export ARK_AGENT_PLAN_ANTHROPIC_VERSION=2023-06-01
 ```
 
 ## Workspace
@@ -26,6 +50,13 @@ crates/
 ```
 
 ## CLI
+
+Initialize config:
+
+```bash
+cargo run -p doubao-agent-plan-cli -- init --api-key ark-...
+cargo run -p doubao-agent-plan-cli -- config show
+```
 
 Chat:
 
@@ -111,7 +142,7 @@ grpcurl -plaintext \
 use doubao_agent_plan::{AgentPlanClient, AgentPlanConfig, LlmMessageRequest};
 
 # async fn example() -> anyhow::Result<()> {
-let client = AgentPlanClient::new(AgentPlanConfig::from_env()?)?;
+let client = AgentPlanClient::new(AgentPlanConfig::from_sources(None)?)?;
 let response = client
     .send_message(&LlmMessageRequest::new("doubao-seed-2.0-mini", "Reply with OK."))
     .await?;
