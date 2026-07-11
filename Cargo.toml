@@ -1,0 +1,33 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/doubao-agent-plan",
+    "crates/doubao-agent-plan-server",
+    "crates/doubao-agent-plan-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Shuozeli/doubao-agent-plan-rs"
+authors = ["Shuozeli <102564117+Shuozeli@users.noreply.github.com>"]
+
+[workspace.dependencies]
+anyhow = "1"
+axum = "0.8"
+base64 = "0.22"
+bytes = "1"
+clap = { version = "4", features = ["derive", "env"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.6", features = ["trace", "cors"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+
+doubao-agent-plan = { path = "crates/doubao-agent-plan" }

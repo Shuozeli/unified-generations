@@ -1,0 +1,8 @@
+/target/
+/.env
+/out/
+*.mp3
+*.wav
+*.png
+*.jpg
+*.jpeg
