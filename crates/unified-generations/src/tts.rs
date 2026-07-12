@@ -10,7 +10,7 @@ impl TtsRequest {
     pub fn new(text: impl Into<String>, speaker: impl Into<String>) -> Self {
         Self {
             user: TtsUser {
-                uid: "doubao-agent-plan-rs".to_string(),
+                uid: "unified-generations".to_string(),
             },
             req_params: TtsRequestParams {
                 text: text.into(),

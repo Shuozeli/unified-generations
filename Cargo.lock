@@ -283,51 +283,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "doubao-agent-plan"
-version = "0.1.0"
-dependencies = [
- "base64",
- "bytes",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "toml",
- "uuid",
-]
-
-[[package]]
-name = "doubao-agent-plan-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "doubao-agent-plan",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "doubao-agent-plan-server"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64",
- "clap",
- "doubao-agent-plan",
- "prost",
- "protoc-bin-vendored",
- "serde",
- "serde_json",
- "tokio",
- "tonic",
- "tonic-build",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "either"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1927,6 +1882,51 @@ name = "unicode-ident"
 version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
+
+[[package]]
+name = "unified-generations"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "bytes",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "toml",
+ "uuid",
+]
+
+[[package]]
+name = "unified-generations-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "serde_json",
+ "tokio",
+ "unified-generations",
+]
+
+[[package]]
+name = "unified-generations-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64",
+ "clap",
+ "prost",
+ "protoc-bin-vendored",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tonic",
+ "tonic-build",
+ "tracing",
+ "tracing-subscriber",
+ "unified-generations",
+]
 
 [[package]]
 name = "untrusted"

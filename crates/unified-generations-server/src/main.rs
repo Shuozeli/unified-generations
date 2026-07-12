@@ -2,11 +2,11 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use clap::Parser;
-use doubao_agent_plan::{
+use tonic::{Request, Response, Status, transport::Server};
+use unified_generations::{
     AgentPlanClient, AgentPlanConfig, AudioFormat, ImageGenerationRequest, ImageOutputFormat,
     ImageSize, LlmMessage, LlmMessageRequest, MessageRole, TtsRequest, tts_voice_presets,
 };
-use tonic::{Request, Response, Status, transport::Server};
 
 pub mod pb {
     tonic::include_proto!("doubao.agentplan.v1");

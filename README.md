@@ -1,7 +1,9 @@
-<!-- agent-updated: 2026-07-11T06:20:00Z -->
-# doubao-agent-plan-rs
+<!-- agent-updated: 2026-07-12T14:43:25Z -->
+# unified-generations
 
-Rust client, CLI, and gRPC server for Volcengine Doubao Ark Agent Plan APIs.
+Rust client, CLI, and gRPC server for unified media/model generation providers.
+
+The current implementation wraps Volcengine Doubao Ark Agent Plan APIs.
 
 This repo wraps the Agent Plan endpoints that were verified on 2026-07-11:
 
@@ -12,7 +14,7 @@ This repo wraps the Agent Plan endpoints that were verified on 2026-07-11:
 The API key is never hard-coded. Initialize a local Ark CLI config first:
 
 ```bash
-cargo run -p doubao-agent-plan-cli -- init --api-key ark-...
+cargo run -p unified-generations-cli -- init --api-key ark-...
 ```
 
 This writes `~/.arkcli/config.toml`:
@@ -25,7 +27,7 @@ tts_resource_id = "seed-tts-2.0"
 anthropic_version = "2023-06-01"
 ```
 
-Use `cargo run -p doubao-agent-plan-cli -- config show` to inspect the active
+Use `cargo run -p unified-generations-cli -- config show` to inspect the active
 file with the key masked. The CLI, SDK helper, and gRPC server all read this
 file by default.
 
@@ -44,9 +46,9 @@ export ARK_AGENT_PLAN_ANTHROPIC_VERSION=2023-06-01
 
 ```text
 crates/
-├── doubao-agent-plan          Rust client SDK
-├── doubao-agent-plan-cli      Command line wrapper
-└── doubao-agent-plan-server   tonic gRPC wrapper
+├── unified-generations          Rust client SDK
+├── unified-generations-cli      Command line wrapper
+└── unified-generations-server   tonic gRPC wrapper
 ```
 
 ## CLI
@@ -54,14 +56,14 @@ crates/
 Initialize config:
 
 ```bash
-cargo run -p doubao-agent-plan-cli -- init --api-key ark-...
-cargo run -p doubao-agent-plan-cli -- config show
+cargo run -p unified-generations-cli -- init --api-key ark-...
+cargo run -p unified-generations-cli -- config show
 ```
 
 Chat:
 
 ```bash
-cargo run -p doubao-agent-plan-cli -- chat \
+cargo run -p unified-generations-cli -- chat \
   --model doubao-seed-2.0-mini \
   "Reply only with OK."
 ```
@@ -69,14 +71,14 @@ cargo run -p doubao-agent-plan-cli -- chat \
 Generate an image:
 
 ```bash
-cargo run -p doubao-agent-plan-cli -- image \
+cargo run -p unified-generations-cli -- image \
   "A small red cube on a plain white background, minimal product photo."
 ```
 
 Synthesize speech:
 
 ```bash
-cargo run -p doubao-agent-plan-cli -- tts \
+cargo run -p unified-generations-cli -- tts \
   --speaker zh_female_gaolengyujie_uranus_bigtts \
   --out speech.mp3 \
   "你好，欢迎使用语音合成服务。"
@@ -85,15 +87,15 @@ cargo run -p doubao-agent-plan-cli -- tts \
 List built-in Agent Plan `seed-tts-2.0` voice presets:
 
 ```bash
-cargo run -p doubao-agent-plan-cli -- voices
-cargo run -p doubao-agent-plan-cli -- voices --gender male
-cargo run -p doubao-agent-plan-cli -- voices --category audiobook
+cargo run -p unified-generations-cli -- voices
+cargo run -p unified-generations-cli -- voices --gender male
+cargo run -p unified-generations-cli -- voices --category audiobook
 ```
 
 Probe the first few built-in TTS presets and write sample MP3s:
 
 ```bash
-cargo run -p doubao-agent-plan-cli -- tts-probe \
+cargo run -p unified-generations-cli -- tts-probe \
   --limit 6 \
   --out-dir out/tts-probe \
   --text "你好，欢迎使用语音合成服务。"
@@ -106,7 +108,7 @@ For example, `zh_male_jingqiangkanye_moon_bigtts` returned
 ## Server
 
 ```bash
-cargo run -p doubao-agent-plan-server -- --bind 127.0.0.1:8787
+cargo run -p unified-generations-server -- --bind 127.0.0.1:8787
 ```
 
 gRPC service:
@@ -120,7 +122,7 @@ gRPC service:
 The protobuf contract lives at:
 
 ```text
-crates/doubao-agent-plan-server/proto/doubao/agentplan/v1/agent_plan.proto
+crates/unified-generations-server/proto/doubao/agentplan/v1/agent_plan.proto
 ```
 
 Example with `grpcurl`:
@@ -139,7 +141,7 @@ grpcurl -plaintext \
 ## Rust API
 
 ```rust
-use doubao_agent_plan::{AgentPlanClient, AgentPlanConfig, LlmMessageRequest};
+use unified_generations::{AgentPlanClient, AgentPlanConfig, LlmMessageRequest};
 
 # async fn example() -> anyhow::Result<()> {
 let client = AgentPlanClient::new(AgentPlanConfig::from_sources(None)?)?;

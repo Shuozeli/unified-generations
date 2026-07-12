@@ -1,4 +1,4 @@
-<!-- agent-updated: 2026-07-11T06:20:00Z -->
+<!-- agent-updated: 2026-07-12T14:43:25Z -->
 # API
 
 ## Client SDK
@@ -41,8 +41,8 @@ The SDK also exposes `tts_voice_presets()`, a curated set of known Agent Plan
 
 ## gRPC Server
 
-`doubao-agent-plan-server` provides a tonic gRPC facade. The protobuf source is
-`crates/doubao-agent-plan-server/proto/doubao/agentplan/v1/agent_plan.proto`.
+`unified-generations-server` provides a tonic gRPC facade. The protobuf source is
+`crates/unified-generations-server/proto/doubao/agentplan/v1/agent_plan.proto`.
 
 Service: `doubao.agentplan.v1.AgentPlanService`
 

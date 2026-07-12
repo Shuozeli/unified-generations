@@ -1,5 +1,5 @@
 [package]
-name = "doubao-agent-plan"
+name = "unified-generations"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

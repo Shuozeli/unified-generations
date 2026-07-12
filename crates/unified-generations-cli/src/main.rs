@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use clap::{Parser, Subcommand, ValueEnum};
-use doubao_agent_plan::{
+use unified_generations::{
     AgentPlanClient, AgentPlanConfig, ArkCliConfig, AudioFormat, DEFAULT_ANTHROPIC_VERSION,
     DEFAULT_PLAN_BASE_URL, DEFAULT_TTS_RESOURCE_ID, DEFAULT_TTS_URL, ImageGenerationRequest,
     ImageOutputFormat, ImageSize, LlmMessageRequest, TtsRequest, arkcli_config_path,

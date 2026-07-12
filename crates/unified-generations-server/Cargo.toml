@@ -1,5 +1,5 @@
 [package]
-name = "doubao-agent-plan-server"
+name = "unified-generations-server"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,14 +9,14 @@ authors.workspace = true
 description = "gRPC server wrapper for Volcengine Doubao Ark Agent Plan APIs."
 
 [[bin]]
-name = "doubao-agent-plan-server"
+name = "unified-generations-server"
 path = "src/main.rs"
 
 [dependencies]
 anyhow.workspace = true
 base64.workspace = true
 clap.workspace = true
-doubao-agent-plan.workspace = true
+unified-generations.workspace = true
 prost.workspace = true
 serde.workspace = true
 serde_json.workspace = true
