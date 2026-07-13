@@ -1,4 +1,4 @@
-<!-- agent-updated: 2026-07-12T14:43:25Z -->
+<!-- agent-updated: 2026-07-13T05:12:14Z -->
 # unified-generations
 
 Rust client, CLI, and gRPC server for unified media/model generation providers.
@@ -10,6 +10,17 @@ This repo wraps the Agent Plan endpoints that were verified on 2026-07-11:
 - LLM messages: `https://ark.cn-beijing.volces.com/api/plan/v1/messages`
 - Image generation: `https://ark.cn-beijing.volces.com/api/plan/v3/images/generations`
 - TTS: `https://openspeech.bytedance.com/api/v3/plan/tts/unidirectional`
+
+Official Ark reference:
+
+- [Ark Agent Plan API calling docs](https://console.volcengine.com/ark/region:cn-beijing/docs/82379/2373738)
+- [Volcengine Ark model list](https://www.volcengine.com/docs/82379/1330310)
+- [Volcengine Ark Agent Plan overview](https://www.volcengine.com/docs/82379/2366394)
+
+Project docs:
+
+- [Setup guide](docs/SETUP.md): local prerequisites, config, first calls, and troubleshooting.
+- [API reference](docs/API.md): SDK, CLI, gRPC, endpoint mapping, and official Ark cross-links.
 
 The API key is never hard-coded. Initialize a local Ark CLI config first:
 

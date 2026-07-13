@@ -1,5 +1,23 @@
-<!-- agent-updated: 2026-07-12T14:43:25Z -->
+<!-- agent-updated: 2026-07-13T05:12:14Z -->
 # API
+
+## Official References
+
+This crate currently targets the Volcengine Doubao Ark Agent Plan API surface.
+The original Ark documentation pages are the source of truth when endpoint
+contracts change:
+
+- [Ark Agent Plan API calling docs](https://console.volcengine.com/ark/region:cn-beijing/docs/82379/2373738)
+- [Volcengine Ark model list](https://www.volcengine.com/docs/82379/1330310)
+- [Volcengine Ark Agent Plan overview](https://www.volcengine.com/docs/82379/2366394)
+
+Implemented endpoint mapping:
+
+| SDK / gRPC method | HTTP endpoint | Official doc |
+|---|---|---|
+| `send_message` / `SendMessage` | `POST https://ark.cn-beijing.volces.com/api/plan/v1/messages` | [Agent Plan calling docs](https://console.volcengine.com/ark/region:cn-beijing/docs/82379/2373738) |
+| `generate_image` / `GenerateImage` | `POST https://ark.cn-beijing.volces.com/api/plan/v3/images/generations` | [Agent Plan calling docs](https://console.volcengine.com/ark/region:cn-beijing/docs/82379/2373738) |
+| `synthesize_speech` / `SynthesizeSpeech` | `POST https://openspeech.bytedance.com/api/v3/plan/tts/unidirectional` | [Agent Plan calling docs](https://console.volcengine.com/ark/region:cn-beijing/docs/82379/2373738) |
 
 ## Client SDK
 
@@ -58,6 +76,8 @@ Returns:
 
 Calls the Agent Plan Anthropic-compatible messages endpoint.
 
+Default endpoint: `POST https://ark.cn-beijing.volces.com/api/plan/v1/messages`.
+
 Key fields:
 
 - `model`
@@ -69,6 +89,9 @@ Returns `text`, `usage_json`, and `raw_json`.
 ### `GenerateImage`
 
 Calls Agent Plan image generation.
+
+Default endpoint:
+`POST https://ark.cn-beijing.volces.com/api/plan/v3/images/generations`.
 
 Key fields:
 
@@ -83,6 +106,9 @@ Returns repeated generated images plus `usage_json` and `raw_json`.
 ### `SynthesizeSpeech`
 
 Calls Agent Plan TTS.
+
+Default endpoint:
+`POST https://openspeech.bytedance.com/api/v3/plan/tts/unidirectional`.
 
 Key fields:
 
