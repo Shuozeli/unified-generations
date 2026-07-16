@@ -6,12 +6,13 @@ use clap::{Parser, Subcommand, ValueEnum};
 use unified_generations::{
     AgentPlanClient, AgentPlanConfig, ArkCliConfig, AudioFormat, DEFAULT_ANTHROPIC_VERSION,
     DEFAULT_PLAN_BASE_URL, DEFAULT_TTS_RESOURCE_ID, DEFAULT_TTS_URL, ImageGenerationRequest,
-    ImageOutputFormat, ImageSize, LlmMessageRequest, TtsRequest, arkcli_config_path,
-    load_arkcli_config, masked_api_key, tts_voice_presets, write_arkcli_config,
+    ImageOutputFormat, ImageSize, LlmMessageRequest, MinimaxClient, MinimaxConfig,
+    MinimaxImageRequest, MinimaxTtsRequest, TtsRequest, arkcli_config_path, load_arkcli_config,
+    masked_api_key, tts_voice_presets, write_arkcli_config,
 };
 
 #[derive(Debug, Parser)]
-#[command(version, about = "Volcengine Doubao Ark Agent Plan CLI")]
+#[command(version, about = "Unified generation provider CLI")]
 struct Args {
     #[arg(long, env = "DOUBAO_ARK_AGENT_PLAN_API_KEY")]
     api_key: Option<String>,
@@ -74,6 +75,28 @@ enum Command {
         out_dir: PathBuf,
         #[arg(long, default_value_t = 6)]
         limit: usize,
+    },
+    MinimaxImage {
+        prompt: String,
+        #[arg(long, env = "MINIMAX_API_KEY")]
+        api_key: Option<String>,
+        #[arg(long, default_value = "image-01")]
+        model: String,
+        #[arg(long, default_value_t = 1)]
+        n: u32,
+    },
+    MinimaxTts {
+        text: String,
+        #[arg(long, env = "MINIMAX_API_KEY")]
+        api_key: Option<String>,
+        #[arg(long, env = "MINIMAX_GROUP_ID")]
+        group_id: Option<String>,
+        #[arg(long, default_value = "speech-02-hd")]
+        model: String,
+        #[arg(long, default_value = "male-qn-qingse")]
+        voice: String,
+        #[arg(long, default_value = "minimax-speech.mp3")]
+        out: PathBuf,
     },
 }
 
@@ -230,6 +253,35 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
         }
+        Command::MinimaxImage {
+            prompt,
+            api_key,
+            model,
+            n,
+        } => {
+            let client = make_minimax_client(api_key, None)?;
+            let mut request = MinimaxImageRequest::new(prompt);
+            request.model = model;
+            request.n = Some(n);
+            let response = client.generate_image(&request).await?;
+            println!("{}", serde_json::to_string_pretty(response.image_urls())?);
+        }
+        Command::MinimaxTts {
+            text,
+            api_key,
+            group_id,
+            model,
+            voice,
+            out,
+        } => {
+            let client = make_minimax_client(api_key, group_id)?;
+            let mut request = MinimaxTtsRequest::new(text, voice);
+            request.model = model;
+            let response = client.synthesize_speech(&request).await?;
+            std::fs::write(&out, response.audio)
+                .with_context(|| format!("failed to write {}", out.display()))?;
+            println!("{}", out.display());
+        }
     }
 
     Ok(())
@@ -238,6 +290,17 @@ async fn main() -> anyhow::Result<()> {
 fn make_client(api_key: Option<String>) -> anyhow::Result<AgentPlanClient> {
     let config = AgentPlanConfig::from_sources(api_key)?;
     Ok(AgentPlanClient::new(config)?)
+}
+
+fn make_minimax_client(
+    api_key: Option<String>,
+    group_id: Option<String>,
+) -> anyhow::Result<MinimaxClient> {
+    let mut config = MinimaxConfig::from_sources(api_key)?;
+    if group_id.is_some() {
+        config.group_id = group_id;
+    }
+    Ok(MinimaxClient::new(config)?)
 }
 
 fn resolve_init_api_key(api_key: Option<String>) -> anyhow::Result<String> {

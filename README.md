@@ -1,9 +1,12 @@
-<!-- agent-updated: 2026-07-13T05:12:14Z -->
+<!-- agent-updated: 2026-07-16T05:09:09Z -->
 # unified-generations
 
 Rust client, CLI, and gRPC server for unified media/model generation providers.
 
-The current implementation wraps Volcengine Doubao Ark Agent Plan APIs.
+The current implementation wraps:
+
+- Volcengine Doubao Ark Agent Plan APIs for LLM, image, and TTS.
+- MiniMax APIs for image generation and TTS.
 
 This repo wraps the Agent Plan endpoints that were verified on 2026-07-11:
 
@@ -51,6 +54,15 @@ export ARK_AGENT_PLAN_BASE_URL=https://ark.cn-beijing.volces.com/api/plan
 export ARK_AGENT_PLAN_TTS_URL=https://openspeech.bytedance.com/api/v3/plan/tts/unidirectional
 export ARK_AGENT_PLAN_TTS_RESOURCE_ID=seed-tts-2.0
 export ARK_AGENT_PLAN_ANTHROPIC_VERSION=2023-06-01
+```
+
+MiniMax commands read environment configuration:
+
+```bash
+export MINIMAX_API_KEY=...
+export MINIMAX_GROUP_ID=...
+export MINIMAX_IMAGE_URL=https://api.minimax.io/v1/image_generation
+export MINIMAX_TTS_URL=https://api.minimax.io/v1/t2a_v2
 ```
 
 ## Workspace
@@ -115,6 +127,23 @@ cargo run -p unified-generations-cli -- tts-probe \
 Note: older `seed-tts-1.0` speakers may not match Agent Plan `seed-tts-2.0`.
 For example, `zh_male_jingqiangkanye_moon_bigtts` returned
 `resource ID is mismatched with speaker related resource` during the probe.
+
+MiniMax image:
+
+```bash
+cargo run -p unified-generations-cli -- minimax-image \
+  --model image-01 \
+  "A clean product photo of a red cube on a white background."
+```
+
+MiniMax TTS:
+
+```bash
+cargo run -p unified-generations-cli -- minimax-tts \
+  --voice male-qn-qingse \
+  --out minimax-speech.mp3 \
+  "Hello from MiniMax text to speech."
+```
 
 ## Server
 

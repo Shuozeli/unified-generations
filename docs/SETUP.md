@@ -1,9 +1,9 @@
-<!-- agent-updated: 2026-07-13T05:12:14Z -->
+<!-- agent-updated: 2026-07-16T05:09:09Z -->
 # Setup
 
 This project provides a Rust SDK, CLI, and gRPC server for unified generation
 providers. The current provider implementation is Volcengine Doubao Ark Agent
-Plan.
+Plan, plus MiniMax image and TTS APIs.
 
 ## Official Ark Docs
 
@@ -27,6 +27,11 @@ The local implementation currently maps to:
 - Network access to Volcengine Ark and ByteDance OpenSpeech endpoints.
 - A valid Ark Agent Plan API key.
 - `grpcurl` only if you want to test the gRPC server manually.
+
+For MiniMax calls:
+
+- A valid MiniMax API key.
+- `MINIMAX_GROUP_ID` when the target MiniMax TTS endpoint requires a group id.
 
 ## Install And Configure
 
@@ -85,6 +90,14 @@ Supported environment variables:
 - `ARK_AGENT_PLAN_TTS_RESOURCE_ID`
 - `ARK_AGENT_PLAN_ANTHROPIC_VERSION`
 
+MiniMax configuration is environment-only for now:
+
+- `MINIMAX_API_KEY`
+- `MINIMAX_TOKEN_PLAN_API_KEY`
+- `MINIMAX_GROUP_ID`
+- `MINIMAX_IMAGE_URL`
+- `MINIMAX_TTS_URL`
+
 ## First Calls
 
 Chat:
@@ -101,7 +114,6 @@ Image:
 cargo run -p unified-generations-cli -- image \
   --model doubao-seedream-5.0-lite \
   --size 2K \
-  --out image.png \
   "A clean product photo of a red cube on a white background."
 ```
 
@@ -120,6 +132,23 @@ Voice catalog:
 cargo run -p unified-generations-cli -- voices
 cargo run -p unified-generations-cli -- voices --gender female
 cargo run -p unified-generations-cli -- voices --category audiobook
+```
+
+MiniMax image:
+
+```bash
+cargo run -p unified-generations-cli -- minimax-image \
+  --model image-01 \
+  "A clean product photo of a red cube on a white background."
+```
+
+MiniMax speech:
+
+```bash
+cargo run -p unified-generations-cli -- minimax-tts \
+  --voice male-qn-qingse \
+  --out minimax-speech.mp3 \
+  "Hello from MiniMax text to speech."
 ```
 
 ## gRPC Server
@@ -171,3 +200,7 @@ and the [Agent Plan overview](https://www.volcengine.com/docs/82379/2366394).
 TTS `resource ID is mismatched with speaker related resource` means the speaker
 ID does not belong to the configured `tts_resource_id`. The default
 `seed-tts-2.0` works with the built-in presets returned by `voices`.
+
+MiniMax `missing API key` means `MINIMAX_API_KEY` and
+`MINIMAX_TOKEN_PLAN_API_KEY` were both absent, and no `--api-key` was passed to
+the MiniMax command.

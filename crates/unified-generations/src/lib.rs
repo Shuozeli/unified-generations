@@ -3,6 +3,7 @@ pub mod config_file;
 pub mod error;
 pub mod image;
 pub mod llm;
+pub mod minimax;
 pub mod tts;
 pub mod voices;
 
@@ -15,5 +16,10 @@ pub use config_file::{
 pub use error::{AgentPlanError, Result};
 pub use image::{ImageGenerationRequest, ImageGenerationResponse, ImageOutputFormat, ImageSize};
 pub use llm::{LlmMessage, LlmMessageRequest, LlmMessageResponse, MessageContent, MessageRole};
+pub use minimax::{
+    DEFAULT_MINIMAX_IMAGE_URL, DEFAULT_MINIMAX_TTS_URL, MinimaxAudioFormat, MinimaxClient,
+    MinimaxConfig, MinimaxImageRequest, MinimaxImageResponse, MinimaxTtsRequest,
+    MinimaxTtsResponse,
+};
 pub use tts::{AudioFormat, TtsRequest, TtsResponse};
 pub use voices::{VoicePreset, tts_voice_presets};

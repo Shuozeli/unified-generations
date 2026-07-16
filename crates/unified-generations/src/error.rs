@@ -31,9 +31,15 @@ pub enum AgentPlanError {
         body: String,
     },
 
+    #[error("API returned code {code}: {message}")]
+    ApiCode { code: i64, message: String },
+
     #[error("TTS returned code {code}: {message}")]
     TtsCode { code: i64, message: String },
 
     #[error("TTS response contained no audio chunks")]
     EmptyAudio,
+
+    #[error("invalid audio hex payload")]
+    InvalidAudioHex,
 }

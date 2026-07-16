@@ -1,4 +1,4 @@
-<!-- agent-updated: 2026-07-13T05:12:14Z -->
+<!-- agent-updated: 2026-07-16T05:09:09Z -->
 # API
 
 ## Official References
@@ -18,6 +18,18 @@ Implemented endpoint mapping:
 | `send_message` / `SendMessage` | `POST https://ark.cn-beijing.volces.com/api/plan/v1/messages` | [Agent Plan calling docs](https://console.volcengine.com/ark/region:cn-beijing/docs/82379/2373738) |
 | `generate_image` / `GenerateImage` | `POST https://ark.cn-beijing.volces.com/api/plan/v3/images/generations` | [Agent Plan calling docs](https://console.volcengine.com/ark/region:cn-beijing/docs/82379/2373738) |
 | `synthesize_speech` / `SynthesizeSpeech` | `POST https://openspeech.bytedance.com/api/v3/plan/tts/unidirectional` | [Agent Plan calling docs](https://console.volcengine.com/ark/region:cn-beijing/docs/82379/2373738) |
+
+MiniMax references:
+
+- [MiniMax image generation docs](https://platform.minimax.io/docs/api-reference/image-generation-t2i)
+- [MiniMax TTS HTTP docs](https://platform.minimax.io/docs/api-reference/speech-t2a-http)
+
+MiniMax endpoint mapping:
+
+| SDK method | HTTP endpoint |
+|---|---|
+| `MinimaxClient::generate_image` | `POST https://api.minimax.io/v1/image_generation` |
+| `MinimaxClient::synthesize_speech` | `POST https://api.minimax.io/v1/t2a_v2` |
 
 ## Client SDK
 
@@ -56,6 +68,33 @@ Environment overrides:
 
 The SDK also exposes `tts_voice_presets()`, a curated set of known Agent Plan
 `seed-tts-2.0` speaker IDs with display names and categories.
+
+## MiniMax SDK
+
+`MinimaxConfig::from_sources(None)` loads MiniMax settings from environment
+variables. Passing `Some(api_key)` overrides only the key for one client
+construction.
+
+Supported environment variables:
+
+- `MINIMAX_API_KEY`
+- `MINIMAX_TOKEN_PLAN_API_KEY`
+- `MINIMAX_GROUP_ID`
+- `MINIMAX_IMAGE_URL`
+- `MINIMAX_TTS_URL`
+
+Defaults:
+
+- Image endpoint: `https://api.minimax.io/v1/image_generation`
+- TTS endpoint: `https://api.minimax.io/v1/t2a_v2`
+
+`MinimaxClient` exposes two methods:
+
+- `generate_image(&MinimaxImageRequest) -> MinimaxImageResponse`
+- `synthesize_speech(&MinimaxTtsRequest) -> MinimaxTtsResponse`
+
+The MiniMax image default model is `image-01`. The MiniMax TTS default model is
+`speech-02-hd`.
 
 ## gRPC Server
 

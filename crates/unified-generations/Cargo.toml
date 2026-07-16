@@ -6,7 +6,7 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-description = "Rust client SDK for Volcengine Doubao Ark Agent Plan LLM, image, and TTS APIs."
+description = "Rust client SDK for unified generation provider APIs."
 
 [dependencies]
 base64.workspace = true

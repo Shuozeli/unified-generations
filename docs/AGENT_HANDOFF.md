@@ -1,4 +1,4 @@
-<!-- agent-updated: 2026-07-15T17:52:20Z -->
+<!-- agent-updated: 2026-07-16T05:09:09Z -->
 # Agent Handoff
 
 This document is for another coding agent taking over `unified-generations`.
@@ -26,7 +26,7 @@ main
 ## What This Repo Does
 
 `unified-generations` is a Rust workspace for generation providers. It currently
-implements Volcengine Doubao Ark Agent Plan access through:
+implements Volcengine Doubao Ark Agent Plan and MiniMax access through:
 
 - `crates/unified-generations`: Rust SDK.
 - `crates/unified-generations-cli`: CLI binary named `unified-generations`.
@@ -38,6 +38,8 @@ Implemented capabilities:
 - Image generation.
 - Text-to-speech.
 - Built-in TTS voice preset listing.
+- MiniMax image generation.
+- MiniMax text-to-speech.
 
 ## Doubao Ark Coding / Agent Plan Key
 
@@ -86,6 +88,22 @@ Check the active config without printing the raw key:
 ```bash
 cargo run -p unified-generations-cli -- config show
 ```
+
+## MiniMax Key
+
+Do not commit the raw key to this repo.
+
+MiniMax support currently reads configuration from environment variables:
+
+- `MINIMAX_API_KEY`
+- `MINIMAX_TOKEN_PLAN_API_KEY`
+- `MINIMAX_GROUP_ID`
+- `MINIMAX_IMAGE_URL`
+- `MINIMAX_TTS_URL`
+
+MiniMax image generation does not need `MINIMAX_GROUP_ID`. MiniMax TTS may need
+it depending on the account and endpoint. Pass it explicitly with `--group-id`,
+or export `MINIMAX_GROUP_ID`.
 
 ## Official Ark Docs
 
@@ -139,6 +157,23 @@ cargo run -p unified-generations-cli -- tts \
   --speaker zh_female_gaolengyujie_uranus_bigtts \
   --out speech.mp3 \
   "你好，欢迎使用语音合成服务。"
+```
+
+Generate a MiniMax image:
+
+```bash
+cargo run -p unified-generations-cli -- minimax-image \
+  --model image-01 \
+  "A clean product photo of a red cube on a white background."
+```
+
+Generate MiniMax speech:
+
+```bash
+cargo run -p unified-generations-cli -- minimax-tts \
+  --voice male-qn-qingse \
+  --out minimax-speech.mp3 \
+  "Hello from MiniMax text to speech."
 ```
 
 Start the gRPC server:

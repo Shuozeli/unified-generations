@@ -6,7 +6,7 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-description = "Command line client for Volcengine Doubao Ark Agent Plan APIs."
+description = "Command line client for unified generation provider APIs."
 
 [[bin]]
 name = "unified-generations"
